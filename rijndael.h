@@ -14,6 +14,10 @@
  * entry point to the library for programmes hoping to use it to
  * encrypt or decrypt data)
  */
+
+#define AES_SIZE 16 //16 bytes == 128 bits
+#define NUM_ROUNDS 10
+
 unsigned char *aes_encrypt_block(unsigned char *plaintext, unsigned char *key);
 unsigned char *aes_decrypt_block(unsigned char *ciphertext, unsigned char *key);
 
