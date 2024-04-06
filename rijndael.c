@@ -120,8 +120,21 @@ void shift_rows(unsigned char * plain_text) {
 	}
 }
 
-void mix_columns(unsigned char *block) {
-  // TODO: Implement me!
+void mix_columns(unsigned char *plain_text) {
+
+	unsigned char temp_block[AES_SIZE];
+
+	for (int i = 0; i < AES_SIZE; i += 4) {
+
+		temp_block[i] = gmul(plain_text[i], (unsigned char)2) ^ gmul(plain_text[i + 1], (unsigned char)3) ^ plain_text[i + 2] ^ plain_text[i + 3];
+		temp_block[i + 1] = plain_text[i] ^ gmul(plain_text[i + 1], (unsigned char) 2) ^ gmul(plain_text[i + 2], (unsigned char) 3) ^ plain_text[i + 3];
+		temp_block[i + 2] = plain_text[i] ^ plain_text[i + 1] ^ gmul(plain_text[i + 2], (unsigned char) 2) ^ gmul(plain_text[i + 3], (unsigned char) 3);
+		temp_block[i + 3] = gmul(plain_text[i], (unsigned char) 3) ^ plain_text[i + 1] ^ plain_text[i + 2] ^ gmul(plain_text[i + 3], (unsigned char) 2);
+	}
+
+	for (int i = 0; i < AES_SIZE; i++) {
+		plain_text[i] = temp_block[i];
+	}
 }
 
 /*
