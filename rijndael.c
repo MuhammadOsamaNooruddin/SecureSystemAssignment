@@ -97,12 +97,27 @@ unsigned char rcon[AES_SIZE] = {
 /*
  * Operations used when encrypting a block
  */
-void sub_bytes(unsigned char *block) {
-  // TODO: Implement me!
+
+void sub_bytes(unsigned char * plain_text) {
+	for (int i = 0; i < AES_SIZE; i++) {
+		plain_text[i] = s_box[plain_text[i]];
+	}
 }
 
-void shift_rows(unsigned char *block) {
-  // TODO: Implement me!
+void shift_rows(unsigned char * plain_text) {
+	unsigned char temp_block[AES_SIZE];
+
+	for (int i = 0; i < AES_SIZE; i += 4) {
+		//incrementing by 5 causes the diagonal shift effect
+		temp_block[i] = plain_text[i];
+		temp_block[i + 1] = plain_text[(i + 5) % AES_SIZE];
+		temp_block[i + 2] = plain_text[(i + 10) % AES_SIZE];
+		temp_block[i + 3] = plain_text[(i + 15) % AES_SIZE];
+	}
+
+	for (int i = 0; i < AES_SIZE; i++) {
+		plain_text[i] = temp_block[i];
+	}
 }
 
 void mix_columns(unsigned char *block) {
