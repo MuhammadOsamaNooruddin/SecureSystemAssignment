@@ -140,16 +140,50 @@ void mix_columns(unsigned char *plain_text) {
 /*
  * Operations used when decrypting a block
  */
-void invert_sub_bytes(unsigned char *block) {
-  // TODO: Implement me!
+void invert_sub_bytes(unsigned char * state) {
+	for (int i = 0; i < AES_SIZE; i++) {
+		state[i] = inv_s[state[i]];
+	}
 }
 
-void invert_shift_rows(unsigned char *block) {
-  // TODO: Implement me!
+void invert_shift_rows(unsigned char * plain_text) {
+	unsigned char temp_block[AES_SIZE];
+
+	for (int i = 0; i < AES_SIZE; i += 4) {
+		//incrementing by 5 causes the diagonal shift effect
+		temp_block[i] = plain_text[i];
+		temp_block[(i + 5) % AES_SIZE] = plain_text[i+1];
+		temp_block[(i + 10) % AES_SIZE] = plain_text[i+2];
+		temp_block[(i + 15) % AES_SIZE] = plain_text[i+3];
+	}
+
+	for (int i = 0; i < AES_SIZE; i++) {
+		plain_text[i] = temp_block[i];
+	}
 }
 
-void invert_mix_columns(unsigned char *block) {
-  // TODO: Implement me!
+void invert_mix_columns(unsigned char *plain_text) {
+
+	unsigned char temp_block[AES_SIZE];
+
+	for (int i = 0; i < AES_SIZE; i += 4) { 
+	//inverse multiplication > 9,11,13,14
+		temp_block[i] = gmul(plain_text[i], (unsigned char) 14) ^ gmul(plain_text[i + 1], (unsigned char)11) ^ 
+			gmul(plain_text[i + 2], (unsigned char)13) ^ gmul(plain_text[i + 3], (unsigned char)9);
+
+		temp_block[i + 1] = gmul(plain_text[i], (unsigned char) 9) ^ gmul(plain_text[i + 1], (unsigned char)14) ^ 
+			gmul(plain_text[i + 2], (unsigned char)11) ^ gmul(plain_text[i + 3], (unsigned char)13);
+
+		temp_block[i + 2] = gmul(plain_text[i], (unsigned char)13) ^ gmul(plain_text[i + 1], (unsigned char)9) ^ 
+			gmul(plain_text[i + 2], (unsigned char)14) ^ gmul(plain_text[i + 3], (unsigned char)11);
+
+		temp_block[i + 3] = gmul(plain_text[i], (unsigned char)11) ^ gmul(plain_text[i + 1], (unsigned char)13) ^ 
+			gmul(plain_text[i + 2], (unsigned char)9) ^ gmul(plain_text[i + 3], (unsigned char)14);
+	}
+
+    for (int i = 0; i < AES_SIZE; i++) {
+		plain_text[i] = temp_block[i];
+	}
 }
 
 /*
