@@ -189,8 +189,11 @@ void invert_mix_columns(unsigned char *plain_text) {
 /*
  * This operation is shared between encryption and decryption
  */
-void add_round_key(unsigned char *block, unsigned char *round_key) {
-  // TODO: Implement me!
+void add_round_key(unsigned char * plain_text, unsigned char * roundKey)
+{
+	for (int i = 0; i < AES_SIZE; i++) {
+		plain_text[i] = plain_text[i] ^ roundKey[i];
+	}
 }
 
 /*
