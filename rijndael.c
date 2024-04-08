@@ -201,9 +201,44 @@ void add_round_key(unsigned char * plain_text, unsigned char * roundKey)
  * which is a single 128-bit key, it should return a 176-byte
  * vector, containing the 11 round keys one after the other
  */
-unsigned char *expand_key(unsigned char *cipher_key) {
-  // TODO: Implement me!
-  return 0;
+unsigned char *expand_key(unsigned char* inputKey, unsigned char* expandedKeys) {
+
+	for (int i = 0; i < AES_SIZE; i++) {
+		expandedKeys[i] = inputKey[i];
+	}
+
+	int bytesGenerated = AES_SIZE;
+	int rcon_location = 1;
+	unsigned char key_block[4];
+
+
+	while (bytesGenerated < (AES_SIZE * (NUM_ROUNDS + 1))) {
+		for (int i = 0; i < ((AES_SIZE * 8) / 32); i++) { //while is less than the number of 32 bit words in 176 bit expanded keys
+			key_block[i] = expandedKeys[i + bytesGenerated - ((AES_SIZE * 8) / 32)];
+		}
+		if (bytesGenerated % AES_SIZE == 0) {
+
+			unsigned char temp_val = key_block[0];
+			key_block[0] = key_block[1];
+			key_block[1] = key_block[2];
+			key_block[2] = key_block[3];
+			key_block[3] = temp_val;
+
+			key_block[0] = s_box[key_block[0]];
+			key_block[1] = s_box[key_block[1]];
+			key_block[2] = s_box[key_block[2]];
+			key_block[3] = s_box[key_block[3]];
+
+			key_block[0] ^= rcon[rcon_location];
+			rcon_location++;
+
+		}
+
+		for (int i = 0; i < 4; i++) {
+			expandedKeys[bytesGenerated] = expandedKeys[bytesGenerated - AES_SIZE] ^ key_block[i];
+			bytesGenerated++;
+		}
+	}
 }
 
 /*
