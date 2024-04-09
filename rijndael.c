@@ -332,7 +332,7 @@ unsigned char *aes_decrypt_block(unsigned char *ciphertext, unsigned char *key) 
 }
 
 
-void aes_decrypt(unsigned char* plain_text, unsigned char* key, int text_length) {
+unsigned char* aes_decrypt(unsigned char* plain_text, unsigned char* key, int text_length) {
     // Decrypt each block of ciphertext directly without any mode
     for (int i = 0; i < text_length; i += AES_SIZE) {
         aes_decrypt_block(plain_text + i, key); // Decrypt the block of ciphertext
