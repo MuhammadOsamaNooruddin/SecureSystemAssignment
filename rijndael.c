@@ -5,6 +5,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 // TODO: Any other files you need to include should go here
 
 #include "rijndael.h"
@@ -245,17 +246,131 @@ unsigned char *expand_key(unsigned char* inputKey, unsigned char* expandedKeys) 
  * The implementations of the functions declared in the
  * header file should go here
  */
-unsigned char *aes_encrypt_block(unsigned char *plaintext, unsigned char *key) {
-  // TODO: Implement me!
-  unsigned char *output =
-      (unsigned char *)malloc(sizeof(unsigned char) * BLOCK_SIZE);
-  return output;
+
+unsigned char *aes_encrypt_block(unsigned char * plain_text, unsigned char * key) {
+
+    unsigned char expandedKey[AES_SIZE * (NUM_ROUNDS + 1)]; 
+    expand_key(key, expandedKey);
+    add_round_key(plain_text, key);
+
+    // printf("After initial AddRoundKey: ");
+    for (int i = 0; i < AES_SIZE; i++) {
+        // printf("%02X ", plain_text[i]); // changed lowercase x to uppercase X
+    }
+    // printf("\n");
+
+    for (int i = 0; i < NUM_ROUNDS - 1; i++) {
+        sub_bytes(plain_text);
+        shift_rows(plain_text);
+        mix_columns(plain_text);
+        add_round_key(plain_text, expandedKey + (AES_SIZE * (i + 1)));
+
+        // printf("After Round %d: ", i + 1);
+        for (int j = 0; j < AES_SIZE; j++) {
+            // printf("%02X ", plain_text[j]); 
+        }
+        // printf("\n");
+    }
+
+    sub_bytes(plain_text);
+    shift_rows(plain_text);
+    add_round_key(plain_text, expandedKey + (AES_SIZE * NUM_ROUNDS));
+
+    // printf("After final round: ");
+    for (int i = 0; i < AES_SIZE; i++) {
+        // printf("%02X ", plain_text[i]); // changed lowercase x to uppercase X
+    }
+    // printf("\n");
+
+    return plain_text;
 }
 
-unsigned char *aes_decrypt_block(unsigned char *ciphertext,
-                                 unsigned char *key) {
-  // TODO: Implement me!
-  unsigned char *output =
-      (unsigned char *)malloc(sizeof(unsigned char) * BLOCK_SIZE);
-  return output;
+unsigned char* aes_encrypt(unsigned char* plain_text, unsigned char* key, int text_length) {
+    // Encrypt each block of plaintext directly without any mode
+    for (int i = 0; i < text_length; i += AES_SIZE) {
+        aes_encrypt_block(plain_text + i, key); // Encrypt the block of plaintext
+    }
+}
+
+unsigned char *aes_decrypt_block(unsigned char *ciphertext, unsigned char *key) {
+
+    unsigned char expandedKey[AES_SIZE * (NUM_ROUNDS + 1)];
+
+    expand_key(key, expandedKey);
+
+    add_round_key(ciphertext, expandedKey + (AES_SIZE * NUM_ROUNDS));
+
+    invert_shift_rows(ciphertext);
+    invert_sub_bytes(ciphertext);
+
+    // printf("After Initial Round Decryption: ");
+    for (int i = 0; i < AES_SIZE; i++) {
+        // printf("%02X ", ciphertext[i]);
+    }
+    // printf("\n");
+
+    for (int i = NUM_ROUNDS - 1; i >= 1; i--) {
+        add_round_key(ciphertext, expandedKey + (AES_SIZE * i));
+        invert_mix_columns(ciphertext);
+        invert_shift_rows(ciphertext);
+        invert_sub_bytes(ciphertext);
+
+        // printf("After Round %d Decryption: ", NUM_ROUNDS - i);
+        for (int j = 0; j < AES_SIZE; j++) {
+            // printf("%02X ", ciphertext[j]);
+        }
+        // printf("\n");
+    }
+
+    add_round_key(ciphertext, expandedKey);
+
+    // printf("After Final Round Decryption: ");
+    for (int i = 0; i < AES_SIZE; i++) {
+        // printf("%02X ", ciphertext[i]);
+    }
+    // printf("\n");
+}
+
+
+void aes_decrypt(unsigned char* plain_text, unsigned char* key, int text_length) {
+    // Decrypt each block of ciphertext directly without any mode
+    for (int i = 0; i < text_length; i += AES_SIZE) {
+        aes_decrypt_block(plain_text + i, key); // Decrypt the block of ciphertext
+    }
+}
+
+int main() {
+    unsigned char key[AES_SIZE] = {50, 20, 46, 86, 67, 9, 70, 27,
+                                    75, 17, 51, 17, 4,  8, 6,  99};
+    unsigned char iv[AES_SIZE] = {0}; // Initialization Vector (IV)
+    unsigned char plain_text[] = {1, 2,  3,  4,  5,  6,  7,  8,
+                                   9, 10, 11, 12, 13, 14, 15, 16};
+    unsigned char ciphertext[AES_SIZE]; // Array to store the ciphertext
+
+    // Calculate the length of the plaintext
+    int text_length = sizeof(plain_text) / sizeof(unsigned char);
+
+    // Encrypt the plaintext using AES ECB mode
+    aes_encrypt(plain_text, key, text_length);
+
+    // Print the ciphertext
+    printf("Ciphertext: ");
+    for (int i = 0; i < text_length; i++) {
+        printf("%02x ", plain_text[i]);
+        // Store the ciphertext for decryption
+        ciphertext[i] = plain_text[i];
+    }
+    printf("\n");
+
+    // Decrypt the ciphertext back to plaintext using AES ECB mode
+    aes_decrypt(ciphertext, key, text_length);
+
+    // Print the decrypted plaintext
+    printf("Decrypted Plaintext: ");
+    for (int i = 0; i < text_length; i++) {
+        printf("%02x ", ciphertext[i]);
+    }
+    printf("\n");
+
+    return 0;
 }

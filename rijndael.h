@@ -3,22 +3,17 @@
  *       a brief description of this code.
  */
 
-#ifndef RIJNDAEL_H
-#define RIJNDAEL_H
+#define AES_SIZE 16 //16 bytes == 128 bits
+#define NUM_ROUNDS 10
 
-#define BLOCK_ACCESS(block, row, col) (block[(row * 4) + col])
-#define BLOCK_SIZE 16
+#ifndef BLOCK_ACCESS
+#define BLOCK_ACCESS(block, row, col) ((block)[4 * (col) + (row)])
+#endif
 
 /*
  * These should be the main encrypt/decrypt functions (i.e. the main
  * entry point to the library for programmes hoping to use it to
  * encrypt or decrypt data)
  */
-
-#define AES_SIZE 16 //16 bytes == 128 bits
-#define NUM_ROUNDS 10
-
-unsigned char *aes_encrypt_block(unsigned char *plaintext, unsigned char *key);
-unsigned char *aes_decrypt_block(unsigned char *ciphertext, unsigned char *key);
-
-#endif
+unsigned char* AES_decrypt(unsigned char * plain_text, unsigned char * key);
+unsigned char* AES_encrypt(unsigned char * plain_text, unsigned char * key);
