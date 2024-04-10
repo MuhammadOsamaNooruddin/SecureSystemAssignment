@@ -71,29 +71,9 @@ unsigned char gmul(unsigned char rhs, unsigned char lhs) {
 	return peasant;
 }
 
-
-unsigned char rcon[AES_SIZE] = {
-	//only need first 16 values
-	0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a
-	/*
-	0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39,
-	0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a,
-	0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8,
-	0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef,
-	0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc,
-	0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b,
-	0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3,
-	0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94,
-	0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20,
-	0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35,
-	0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f,
-	0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04,
-	0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63,
-	0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd,
-	0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d
-	*/
+unsigned char rcon[16] = {
+	0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
 };
-
 
 /*
  * Operations used when encrypting a block
@@ -202,44 +182,49 @@ void add_round_key(unsigned char * plain_text, unsigned char * roundKey)
  * which is a single 128-bit key, it should return a 176-byte
  * vector, containing the 11 round keys one after the other
  */
-unsigned char *expand_key(unsigned char* inputKey, unsigned char* expandedKeys) {
+unsigned char *expand_key(unsigned char *key_for_Cipher) {
 
-	for (int i = 0; i < AES_SIZE; i++) {
-		expandedKeys[i] = inputKey[i];
-	}
+	unsigned char *expanded_Key = malloc(176);
+	if (!expanded_Key) return NULL;
 
-	int bytesGenerated = AES_SIZE;
+	int bytesGenerated = 0;
 	int rcon_location = 1;
 	unsigned char key_block[4];
 
+	for (int i = 0; i < AES_SIZE; i++) {
+		expanded_Key[i] = key_for_Cipher[i];
+	}
+	bytesGenerated += AES_SIZE;
 
 	while (bytesGenerated < (AES_SIZE * (NUM_ROUNDS + 1))) {
 		for (int i = 0; i < ((AES_SIZE * 8) / 32); i++) { //while is less than the number of 32 bit words in 176 bit expanded keys
-			key_block[i] = expandedKeys[i + bytesGenerated - ((AES_SIZE * 8) / 32)];
+			key_block[i] = expanded_Key[i + bytesGenerated - ((AES_SIZE * 8) / 32)];
 		}
 		if (bytesGenerated % AES_SIZE == 0) {
+			// Rotate the 32-bit word 8 bits to the left
+      unsigned char c = key_block[0];
+      for (int i = 0; i < 3; i++) {
+        key_block[i] = key_block[i + 1];
+      }
+      key_block[3] = c;
 
-			unsigned char temp_val = key_block[0];
-			key_block[0] = key_block[1];
-			key_block[1] = key_block[2];
-			key_block[2] = key_block[3];
-			key_block[3] = temp_val;
+      // Apply S-Box substitution on all 4 parts of the 32-bit word
+      for (int i = 0; i < 4; ++i) {
+        key_block[i] = s_box[key_block[i]];
+      }
 
-			key_block[0] = s_box[key_block[0]];
-			key_block[1] = s_box[key_block[1]];
-			key_block[2] = s_box[key_block[2]];
-			key_block[3] = s_box[key_block[3]];
+      // XOR the output of the rcon operation with iteration to the first part
+      // (leftmost) only
+      key_block[0] = key_block[0] ^ rcon[rcon_location++];
+    }
 
-			key_block[0] ^= rcon[rcon_location];
-			rcon_location++;
-
-		}
 
 		for (int i = 0; i < 4; i++) {
-			expandedKeys[bytesGenerated] = expandedKeys[bytesGenerated - AES_SIZE] ^ key_block[i];
+			expanded_Key[bytesGenerated] = expanded_Key[bytesGenerated - AES_SIZE] ^ key_block[i];
 			bytesGenerated++;
 		}
 	}
+	return expanded_Key;
 }
 
 /*
@@ -250,7 +235,7 @@ unsigned char *expand_key(unsigned char* inputKey, unsigned char* expandedKeys) 
 unsigned char *aes_encrypt_block(unsigned char * plain_text, unsigned char * key) {
 
     unsigned char expandedKey[AES_SIZE * (NUM_ROUNDS + 1)]; 
-    expand_key(key, expandedKey);
+    expand_key(key);
     add_round_key(plain_text, key);
 
     // printf("After initial AddRoundKey: ");
@@ -285,18 +270,12 @@ unsigned char *aes_encrypt_block(unsigned char * plain_text, unsigned char * key
     return plain_text;
 }
 
-unsigned char* aes_encrypt(unsigned char* plain_text, unsigned char* key, int text_length) {
-    // Encrypt each block of plaintext directly without any mode
-    for (int i = 0; i < text_length; i += AES_SIZE) {
-        aes_encrypt_block(plain_text + i, key); // Encrypt the block of plaintext
-    }
-}
 
 unsigned char *aes_decrypt_block(unsigned char *ciphertext, unsigned char *key) {
 
     unsigned char expandedKey[AES_SIZE * (NUM_ROUNDS + 1)];
 
-    expand_key(key, expandedKey);
+    expand_key(key);
 
     add_round_key(ciphertext, expandedKey + (AES_SIZE * NUM_ROUNDS));
 
@@ -331,46 +310,3 @@ unsigned char *aes_decrypt_block(unsigned char *ciphertext, unsigned char *key) 
     // printf("\n");
 }
 
-
-unsigned char* aes_decrypt(unsigned char* plain_text, unsigned char* key, int text_length) {
-    // Decrypt each block of ciphertext directly without any mode
-    for (int i = 0; i < text_length; i += AES_SIZE) {
-        aes_decrypt_block(plain_text + i, key); // Decrypt the block of ciphertext
-    }
-}
-
-int main() {
-    unsigned char key[AES_SIZE] = {50, 20, 46, 86, 67, 9, 70, 27,
-                                    75, 17, 51, 17, 4,  8, 6,  99};
-    unsigned char iv[AES_SIZE] = {0}; // Initialization Vector (IV)
-    unsigned char plain_text[] = {1, 2,  3,  4,  5,  6,  7,  8,
-                                   9, 10, 11, 12, 13, 14, 15, 16};
-    unsigned char ciphertext[AES_SIZE]; // Array to store the ciphertext
-
-    // Calculate the length of the plaintext
-    int text_length = sizeof(plain_text) / sizeof(unsigned char);
-
-    // Encrypt the plaintext using AES ECB mode
-    aes_encrypt(plain_text, key, text_length);
-
-    // Print the ciphertext
-    printf("Ciphertext: ");
-    for (int i = 0; i < text_length; i++) {
-        printf("%02x ", plain_text[i]);
-        // Store the ciphertext for decryption
-        ciphertext[i] = plain_text[i];
-    }
-    printf("\n");
-
-    // Decrypt the ciphertext back to plaintext using AES ECB mode
-    aes_decrypt(ciphertext, key, text_length);
-
-    // Print the decrypted plaintext
-    printf("Decrypted Plaintext: ");
-    for (int i = 0; i < text_length; i++) {
-        printf("%02x ", ciphertext[i]);
-    }
-    printf("\n");
-
-    return 0;
-}
