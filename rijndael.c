@@ -1,7 +1,6 @@
-//comments
 /*
- * TODO: Add your name and student number here, along with
- *       a brief description of this code.
+ *		 Name: Muhammad Osama Noor Uddin, Student Number: D23124872
+		
  */
 
 #include <stdlib.h>
@@ -11,7 +10,9 @@
 #include "rijndael.h"
 #include <string.h>
 
-// Common functions that will be used in both encryption and decryption
+/* Common functions that will be used in both encryption and decryption */
+
+/* table for S_box */
 unsigned char s_box[256] =
 {
 	0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -32,7 +33,7 @@ unsigned char s_box[256] =
 	0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
 };
 
-
+/* table for Inverse S_box */
 unsigned char inv_s[256] =
 {
 	0x52, 0x09, 0x6A, 0xD5, 0x30, 0x36, 0xA5, 0x38, 0xBF, 0x40, 0xA3, 0x9E, 0x81, 0xF3, 0xD7, 0xFB,
@@ -53,6 +54,7 @@ unsigned char inv_s[256] =
 	0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D
 };
 
+
 unsigned char gmul(unsigned char rhs, unsigned char lhs) {
 	unsigned char peasant = 0;
 	unsigned int irreducible = 0x11b;
@@ -71,20 +73,31 @@ unsigned char gmul(unsigned char rhs, unsigned char lhs) {
 	return peasant;
 }
 
+/** table for rcon*/
 unsigned char rcon[16] = {
 	0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
 };
+/* Common functions that will be used in both encryption and decryption */
 
 /*
  * Operations used when encrypting a block
  */
 
+/* Substitutes each byte with a value from a pre-computed S-box */
 void sub_bytes(unsigned char * plain_text) {
 	for (int i = 0; i < AES_SIZE; i++) {
 		plain_text[i] = s_box[plain_text[i]];
 	}
 }
 
+/* This function will shift the rows to the left except row 0
+ * which will not be shifted
+ e.g: Row 0 : no shifting in this row
+	  Row 1 : 1 shift to the left
+	  Row 2 : 2 shifts to the left
+	  Row 3 : 3 shifts to the left
+ 
+*/
 void shift_rows(unsigned char * plain_text) {
 	unsigned char temp_block[AES_SIZE];
 
@@ -101,6 +114,9 @@ void shift_rows(unsigned char * plain_text) {
 	}
 }
 
+/* This function will mix the columns of the block
+ * by using gmul function to multiply the columns
+ */
 void mix_columns(unsigned char *plain_text) {
 
 	unsigned char temp_block[AES_SIZE];
@@ -121,12 +137,15 @@ void mix_columns(unsigned char *plain_text) {
 /*
  * Operations used when decrypting a block
  */
+
+/* Substitutes each byte with a value from a pre-computed inverse S-box */
 void invert_sub_bytes(unsigned char * state) {
 	for (int i = 0; i < AES_SIZE; i++) {
 		state[i] = inv_s[state[i]];
 	}
 }
 
+/* This function will inverts the shift rows operation */
 void invert_shift_rows(unsigned char * plain_text) {
 	unsigned char temp_block[AES_SIZE];
 
@@ -143,6 +162,7 @@ void invert_shift_rows(unsigned char * plain_text) {
 	}
 }
 
+/* This function will invert the mix columns operation using gmul function */
 void invert_mix_columns(unsigned char *plain_text) {
 
 	unsigned char temp_block[AES_SIZE];
@@ -170,6 +190,7 @@ void invert_mix_columns(unsigned char *plain_text) {
 /*
  * This operation is shared between encryption and decryption
  */
+/* This function will Adds the round key to the block, by xoring each corresponding byte */
 void add_round_key(unsigned char * plain_text, unsigned char * roundKey)
 {
 	for (int i = 0; i < AES_SIZE; i++) {
@@ -184,129 +205,122 @@ void add_round_key(unsigned char * plain_text, unsigned char * roundKey)
  */
 unsigned char *expand_key(unsigned char *key_for_Cipher) {
 
-	unsigned char *expanded_Key = malloc(176);
-	if (!expanded_Key) return NULL;
+	// Allocate memory for the expanded key
+	unsigned char *expanded_Key = malloc(176); 
+	if (!expanded_Key) return NULL; //if memory allocation fails
 
+	// variables for the key expansion process
 	int bytesGenerated = 0;
-	int rcon_location = 1;
+	int rcon_location = 1; 
 	unsigned char key_block[4];
 
+	// Copy initial key to expanded key
 	for (int i = 0; i < AES_SIZE; i++) {
 		expanded_Key[i] = key_for_Cipher[i];
 	}
 	bytesGenerated += AES_SIZE;
 
+	// key expansion loop until all round keys are generated
 	while (bytesGenerated < (AES_SIZE * (NUM_ROUNDS + 1))) {
-		for (int i = 0; i < ((AES_SIZE * 8) / 32); i++) { //while is less than the number of 32 bit words in 176 bit expanded keys
-			key_block[i] = expanded_Key[i + bytesGenerated - ((AES_SIZE * 8) / 32)];
-		}
-		if (bytesGenerated % AES_SIZE == 0) {
-			// Rotate the 32-bit word 8 bits to the left
-      unsigned char c = key_block[0];
-      for (int i = 0; i < 3; i++) {
-        key_block[i] = key_block[i + 1];
-      }
-      key_block[3] = c;
+        // Extract a 32-bit word from the expanded key
+        for (int i = 0; i < ((AES_SIZE * 8) / 32); i++) {
+            key_block[i] = expanded_Key[i + bytesGenerated - ((AES_SIZE * 8) / 32)];
+        }
 
-      // Apply S-Box substitution on all 4 parts of the 32-bit word
-      for (int i = 0; i < 4; ++i) {
-        key_block[i] = s_box[key_block[i]];
-      }
+        // this is handle the first word of each block
+        if (bytesGenerated % AES_SIZE == 0) {
+            // perform a circular left shift on the word to rotate the bytes
+            unsigned char c = key_block[0];
+            for (int i = 0; i < 3; i++) {
+                key_block[i] = key_block[i + 1];
+            }
+            key_block[3] = c;
 
-      // XOR the output of the rcon operation with iteration to the first part
-      // (leftmost) only
-      key_block[0] = key_block[0] ^ rcon[rcon_location++];
+            // here applying S-Box substitution on each byte of the word
+            for (int i = 0; i < 4; ++i) {
+                key_block[i] = s_box[key_block[i]];
+            }
+
+            // xor with rcon, where only the first byte is used
+            key_block[0] = key_block[0] ^ rcon[rcon_location++];
+        }
+
+        // the other words of the round key will behave the same
+        for (int i = 0; i < 4; i++) {
+            expanded_Key[bytesGenerated] = expanded_Key[bytesGenerated - AES_SIZE] ^ key_block[i];
+            bytesGenerated++;
+        }
     }
-
-
-		for (int i = 0; i < 4; i++) {
-			expanded_Key[bytesGenerated] = expanded_Key[bytesGenerated - AES_SIZE] ^ key_block[i];
-			bytesGenerated++;
-		}
-	}
 	return expanded_Key;
 }
 
 /*
  * The implementations of the functions declared in the
- * header file should go here
+ * header file is implemented here
  */
 
-unsigned char *aes_encrypt_block(unsigned char * plain_text, unsigned char * key) {
+unsigned char *aes_encrypt_block(unsigned char *plaintext, unsigned char *key) {
+	// Allocate memory for the cipher output
+	unsigned char *cipher_output =(unsigned char *)malloc(sizeof(unsigned char) * AES_SIZE);
+	if (!cipher_output) return NULL; //if memory allocation fails
 
-    unsigned char expandedKey[AES_SIZE * (NUM_ROUNDS + 1)]; 
-    expand_key(key);
-    add_round_key(plain_text, key);
+	// expand the key for the round keys generation
+	unsigned char *expandedKey = expand_key(key);
+	// copy the plaintext to the cipher output buffer
+	for (int i = 0; i < AES_SIZE; i++) {
+		cipher_output[i] = plaintext[i];
+	}
 
-    // printf("After initial AddRoundKey: ");
-    for (int i = 0; i < AES_SIZE; i++) {
-        // printf("%02X ", plain_text[i]); // changed lowercase x to uppercase X
-    }
-    // printf("\n");
+	// Round 1, initial round for the add round key operation
+	add_round_key(cipher_output, expandedKey);
 
-    for (int i = 0; i < NUM_ROUNDS - 1; i++) {
-        sub_bytes(plain_text);
-        shift_rows(plain_text);
-        mix_columns(plain_text);
-        add_round_key(plain_text, expandedKey + (AES_SIZE * (i + 1)));
+	// round 2-9, main rounds of the encryption process
+	for (int i = 1; i < NUM_ROUNDS; i++) {
+		sub_bytes(cipher_output); //substitute bytes using s-box
+		shift_rows(cipher_output); // apply shift rows operation on the block 
+		mix_columns(cipher_output); // apply mix columns operation on the block
+		add_round_key(cipher_output, expandedKey + (AES_SIZE * i)); // apply add round key operation on the block
+	}
+	// final round 10, no mix columns operation applied here rest of the operations are the same sub_bytes, shift_rows, add_round_key
+	sub_bytes(cipher_output);
+	shift_rows(cipher_output);
+	add_round_key(cipher_output, expandedKey + (AES_SIZE * NUM_ROUNDS));  
+	// free the memory allocated for the expanded key
+	free(expandedKey);
 
-        // printf("After Round %d: ", i + 1);
-        for (int j = 0; j < AES_SIZE; j++) {
-            // printf("%02X ", plain_text[j]); 
-        }
-        // printf("\n");
-    }
-
-    sub_bytes(plain_text);
-    shift_rows(plain_text);
-    add_round_key(plain_text, expandedKey + (AES_SIZE * NUM_ROUNDS));
-
-    // printf("After final round: ");
-    for (int i = 0; i < AES_SIZE; i++) {
-        // printf("%02X ", plain_text[i]); // changed lowercase x to uppercase X
-    }
-    // printf("\n");
-
-    return plain_text;
+	return cipher_output;
 }
 
 
-unsigned char *aes_decrypt_block(unsigned char *ciphertext, unsigned char *key) {
+unsigned char* aes_decrypt_block(unsigned char *cipher_text, unsigned char *key) {
+	// Allocate memory for the output
+	unsigned char *output = (unsigned char *)malloc(sizeof(unsigned char) * AES_SIZE);
+	if (!output) return NULL; //if memory allocation fails
 
-    unsigned char expandedKey[AES_SIZE * (NUM_ROUNDS + 1)];
+	// expand the key for the round keys generation
+    unsigned char *expanded_Key = expand_key(key);
+	// copy the cipher text to the output buffer
+	for (int i = 0; i < AES_SIZE; i++) {
+		output[i] = cipher_text[i];
+	}
 
-    expand_key(key);
+	// Round 1, initial round for the add round key operation
+    add_round_key(output, expanded_Key + (AES_SIZE * NUM_ROUNDS)); // apply add round key operation on the block
+    invert_shift_rows(output); // apply inverse shift rows operation on the block
+    invert_sub_bytes(output); // apply inverse sub bytes operation on the block
 
-    add_round_key(ciphertext, expandedKey + (AES_SIZE * NUM_ROUNDS));
-
-    invert_shift_rows(ciphertext);
-    invert_sub_bytes(ciphertext);
-
-    // printf("After Initial Round Decryption: ");
-    for (int i = 0; i < AES_SIZE; i++) {
-        // printf("%02X ", ciphertext[i]);
-    }
-    // printf("\n");
-
+	// round 2-9, main rounds of the decryption process
     for (int i = NUM_ROUNDS - 1; i >= 1; i--) {
-        add_round_key(ciphertext, expandedKey + (AES_SIZE * i));
-        invert_mix_columns(ciphertext);
-        invert_shift_rows(ciphertext);
-        invert_sub_bytes(ciphertext);
+        add_round_key(output, expanded_Key + (AES_SIZE * i)); // apply add round key operation on the block
+        invert_mix_columns(output); // apply inverse mix columns operation on the block
+        invert_shift_rows(output); // apply inverse shift rows operation on the block
+        invert_sub_bytes(output); // apply inverse sub bytes operation on the block
 
-        // printf("After Round %d Decryption: ", NUM_ROUNDS - i);
-        for (int j = 0; j < AES_SIZE; j++) {
-            // printf("%02X ", ciphertext[j]);
-        }
-        // printf("\n");
     }
 
-    add_round_key(ciphertext, expandedKey);
+	// add round key operation for the final round
+    add_round_key(output, expanded_Key);
+	free(expanded_Key); // free the memory allocated for the expanded key
+	return output;
 
-    // printf("After Final Round Decryption: ");
-    for (int i = 0; i < AES_SIZE; i++) {
-        // printf("%02X ", ciphertext[i]);
-    }
-    // printf("\n");
 }
-
