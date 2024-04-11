@@ -1,6 +1,8 @@
 /*
- * TODO: Add your name and student number here, along with
- *       a brief description of this code.
+ *      Name: Muhammad Osama Noor Uddin, Student Number: D23124872
+ *      
+ *      This file contains the function prototypes for the 
+        AES encryption and decryption functions.
  */
 
 #ifndef RIJNDAEL_H
@@ -11,8 +13,6 @@
 #ifndef BLOCK_ACCESS
 #define BLOCK_ACCESS(block, row, col) (block[(row * 4) + col])
 #endif
-
-
 
 /*
  * These should be the main encrypt/decrypt functions (i.e. the main

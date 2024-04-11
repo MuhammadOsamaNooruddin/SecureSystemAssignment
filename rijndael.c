@@ -1,11 +1,16 @@
 /*
- *		 Name: Muhammad Osama Noor Uddin, Student Number: D23124872
+ *		Name: Muhammad Osama Noor Uddin, Student Number: D23124872
+ *	 	This file contains the implementation of 128 bit varient of AES encryption and decryption functions in C.
+ * 		It includes common functions used in both encryption and decryption, as well as operations specific to each.
+ * 		The encryption process contains the following functions, sub_bytes, shift_rows, mix_columns, and the decryption
+ * 		process is the inverse of the encryption process, involving the inverse operations of each functions and the 
+ *		add_round_key function is used in both encryption and decryption processes. The code also includes a key expansion
+ *		function that expands the initial key into a set of round keys for each round of encryption or decryption.
 		
  */
 
 #include <stdlib.h>
 #include <stdio.h>
-// TODO: Any other files you need to include should go here
 
 #include "rijndael.h"
 #include <string.h>
@@ -54,7 +59,7 @@ unsigned char inv_s[256] =
 	0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D
 };
 
-
+/* The function gmul is used to multiply two numbers in the Galois Field(2^8) */
 unsigned char gmul(unsigned char rhs, unsigned char lhs) {
 	unsigned char peasant = 0;
 	unsigned int irreducible = 0x11b;
