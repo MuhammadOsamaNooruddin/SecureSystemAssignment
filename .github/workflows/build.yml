@@ -5,8 +5,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone the repo
+        with:
+          submodules: true
         uses: actions/checkout@v4
       - name: Build the code
         run: |
           sudo apt install -y build-essential python-is-python3
           make
+      - name: Test the Code
+        run: |
+          python3 -m unittest mycode_test.py
